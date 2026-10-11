@@ -10,10 +10,10 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -24,19 +24,25 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
           echo "$ANDROID_SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
 
+      - name: Check Android SDK
+        run: |
+          echo "SDK: $ANDROID_SDK_ROOT"
+          ls "$ANDROID_SDK_ROOT/platforms"
+          ls "$ANDROID_SDK_ROOT/build-tools"
+
       - name: Prepare Gradle
         run: chmod +x gradlew
 
-      - name: Build ARM64 Debug APK
+      - name: Build Debug APK
         run: |
           ./gradlew assembleDebug \
-            -Pandroid.injected.build.abi=arm64-v8a \
-            --stacktrace
+            --stacktrace \
+            --no-daemon
 
-      - name: Upload OnePlus 15 APK
+      - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: FrostKeys-OnePlus15-ARM64-Debug
+          name: FrostKeys-OnePlus15-Debug
           path: "**/build/outputs/apk/debug/*.apk"
           if-no-files-found: error
-          retention-days: 7
